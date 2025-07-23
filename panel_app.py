@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 import glob
 from werkzeug.utils import secure_filename
 
+# تلاش برای ایمپورت کردن کتابخانه‌های مورد نیاز
 try:
     import jdatetime
 except ImportError:
@@ -93,7 +94,7 @@ def serve_website_files(filename):
 
 @app.route('/upload-image', methods=['POST'])
 def upload_image():
-    """تصویر را آپلود و با نام‌گذاری هوشمند ذخیره می‌کند."""
+    """تصویر را آپلود، بهینه و با نام‌گذاری هوشمند ذخیره می‌کند."""
     form = request.form
     if 'image_file' not in request.files or 'english_slug' not in form or 'next_id' not in form or 'upload_type' not in form:
         return jsonify({'success': False, 'error': 'درخواست ناقص است.'}), 400
@@ -116,7 +117,10 @@ def upload_image():
             new_filename = f"{base_filename}.webp"
 
         save_path = os.path.join(IMAGE_UPLOAD_DIR, new_filename)
+        
+        # --- بخش کلیدی بهینه‌سازی تصویر ---
         image = Image.open(file.stream)
+        # ۱. تبدیل به WebP و ۲. کاهش حجم با تعیین کیفیت
         image.save(save_path, 'webp', quality=85)
         
         relative_path = f"assets/img/{new_filename}"
@@ -139,12 +143,10 @@ def delete_image():
         
         if os.path.exists(secure_path):
             os.remove(secure_path)
-            print(f"Deleted image: {secure_path}")
             return jsonify({'success': True})
         else:
             return jsonify({'success': True, 'message': 'فایل یافت نشد.'})
     except Exception as e:
-        print(f"Error deleting image: {e}", file=sys.stderr)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/live-update', methods=['POST'])

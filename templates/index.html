@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>پنل مدیریت پیشرفته</title>
+    <!-- CodeMirror Library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closetag.min.js"></script>
+    <!-- Feather Icons Library -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 2em; background-color: #f4f4f9; color: #333; }
         .container { max-width: 800px; margin: auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -22,15 +34,44 @@
         .status-section { margin-bottom: 2em; }
         .sync-message { text-align: center; padding: 12px; border-radius: 5px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; font-weight: bold; }
         .sync-message.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .preview-frame { width: 100%; height: 500px; border: 1px solid #ccc; border-radius: 4px; background-color: #fff; margin-top: 5px; }
+        
+        /* --- Styles for CodeMirror IDE --- */
+        .CodeMirror {
+            border: 1px solid #ccc;
+            border-radius: 0 0 4px 4px;
+            height: 350px;
+            direction: ltr;
+            font-size: 16px; /* فونت بزرگ‌تر */
+        }
+        .CodeMirror-gutters {
+            background-color: #282c34 !important;
+        }
+
+        /* --- Styles for Editor Toolbar --- */
         .editor-toolbar { background-color: #f8f9fa; padding: 8px; border: 1px solid #ccc; border-bottom: none; border-radius: 4px 4px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
         .toolbar-group { display: flex; gap: 5px; border-left: 1px solid #ddd; padding-left: 5px; }
-        #content { border-radius: 0 0 4px 4px; margin-top: 0; height: 300px; font-family: 'Vazirmatn', monospace; }
-        #preview-frame { width: 100%; height: 500px; border: 1px solid #ccc; border-radius: 4px; background-color: #fff; margin-top: 5px; }
-        
+        .editor-toolbar button {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-size: 0.9em;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+        .editor-toolbar button:hover { background-color: #e9ecef; }
+        .editor-toolbar .feather { width: 18px; height: 18px; }
+
+
         /* --- Styles for Image Uploader --- */
         .uploader-section { margin-top: 2em; padding: 1.5em; border: 1px dashed #ccc; border-radius: 8px; }
-        .cover-image-preview { max-width: 200px; margin-top: 10px; border-radius: 4px; border: 1px solid #ddd; }
         .content-uploader { background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 1em; }
+        .content-uploader p { margin: 0; }
     </style>
 </head>
 <body data-sync-success="{{ sync_success }}">
@@ -58,7 +99,6 @@
             <div class="full-width uploader-section">
                 <h3>🖼️ تصویر اصلی خبر</h3>
                 <input type="file" id="cover-image-input" accept="image/*">
-                <img id="cover-image-preview" src="" alt="پیش‌نمایش تصویر اصلی" style="display: none;">
                 <input type="hidden" id="cover_image_path" name="cover_image_path" class="live-update-input">
             </div>
 
@@ -66,27 +106,27 @@
                 <label for="content">📄 متن کامل خبر (HTML)</label>
                 <div class="editor-toolbar">
                     <div class="toolbar-group">
-                        <button type="button" data-action="wrap" data-tag="b"><b>بولد</b></button>
-                        <button type="button" data-action="wrap" data-tag="i"><i>ایتالیک</i></button>
+                        <button type="button" data-action="wrap" data-tag="b" title="بولد"><i data-feather="bold"></i></button>
+                        <button type="button" data-action="wrap" data-tag="i" title="ایتالیک"><i data-feather="italic"></i></button>
                     </div>
                     <div class="toolbar-group">
-                        <button type="button" data-action="insert" data-tag="h2">زیرتیتر (H2)</button>
-                        <button type="button" data-action="insert" data-tag="p">پاراگراف</button>
+                        <button type="button" data-action="insert" data-tag="h2" title="زیرتیتر">H2</button>
+                        <button type="button" data-action="insert" data-tag="p" title="پاراگراف">P</button>
                     </div>
                     <div class="toolbar-group">
-                        <button type="button" data-action="insert" data-tag="figure">تصویر با کپشن</button>
-                        <button type="button" data-action="insert" data-tag="blockquote">نقل قول</button>
-                        <button type="button" data-action="insert" data-tag="ul">لیست</button>
-                        <button type="button" data-action="insert" data-tag="code">بلاک کد</button>
+                        <button type="button" data-action="insert" data-tag="figure" title="تصویر با کپشن"><i data-feather="image"></i></button>
+                        <button type="button" data-action="insert" data-tag="blockquote" title="نقل قول"><i data-feather="message-square"></i></button>
+                        <button type="button" data-action="insert" data-tag="ul" title="لیست"><i data-feather="list"></i></button>
+                        <button type="button" data-action="insert" data-tag="code" title="بلاک کد"><i data-feather="code"></i></button>
                     </div>
                 </div>
-                <textarea id="content" name="content" class="live-update-input"></textarea>
+                <textarea id="content" name="content"></textarea>
                 <div id="content-image-uploaders"></div>
             </div>
 
             <div class="full-width">
                 <label for="preview-frame">👁️ پیش‌نمایش زنده در سایت اصلی</label>
-                <iframe id="preview-frame" title="Live Preview"></iframe>
+                <iframe id="preview-frame" title="Live Preview" class="preview-frame"></iframe>
             </div>
 
             <button type="submit" class="full-width">ثبت خبر و رفتن به مرحله Push</button>
@@ -95,6 +135,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            feather.replace(); // Render icons
+
             const syncSuccess = document.body.getAttribute('data-sync-success') === 'True';
             if (!syncSuccess) {
                 const form = document.getElementById('news-form');
@@ -104,10 +146,17 @@
             const form = document.getElementById('news-form');
             const toolbar = document.querySelector('.editor-toolbar');
             const previewFrame = document.getElementById('preview-frame');
-            const contentArea = document.getElementById('content');
             const nextIdInput = document.getElementById('next_id');
             const slugInput = document.getElementById('english_slug');
             
+            const codeEditor = CodeMirror.fromTextArea(document.getElementById('content'), {
+                lineNumbers: true,
+                mode: 'htmlmixed',
+                theme: 'dracula',
+                autoCloseTags: true,
+                lineWrapping: true
+            });
+
             const addTagBtn = document.getElementById('add-tag-btn');
             const tagsContainer = document.getElementById('tags-container');
             let tagCounter = 0;
@@ -119,16 +168,6 @@
                 tagRow.innerHTML = `<input type="text" name="tag_name_${tagCounter}" placeholder="نام تگ ${tagCounter}" required><input type="color" name="tag_color_${tagCounter}" value="#3b82f6"><button type="button" class="remove-tag-btn">حذف</button>`;
                 tagsContainer.appendChild(tagRow);
                 if (tagCounter >= 5) addTagBtn.disabled = true;
-                debouncedLiveUpdate();
-            });
-            tagsContainer.addEventListener('input', debouncedLiveUpdate);
-            tagsContainer.addEventListener('click', function (e) {
-                if (e.target.classList.contains('remove-tag-btn')) {
-                    e.target.parentElement.remove();
-                    tagCounter--;
-                    addTagBtn.disabled = false;
-                    debouncedLiveUpdate();
-                }
             });
 
             function getFormDataAsObject() {
@@ -137,6 +176,7 @@
                 for (const [key, value] of formData.entries()) {
                     data[key] = value;
                 }
+                data.content = codeEditor.getValue();
                 data.tags = [];
                 for (let i = 1; i <= 5; i++) {
                     const name = formData.get(`tag_name_${i}`);
@@ -166,20 +206,38 @@
             }
 
             function modifyText(action, tag) {
+                const snippets = {
+                    h2: '<h2>عنوان زیرتیتر</h2>',
+                    p: '<p>متن پاراگراف در اینجا...</p>',
+                    blockquote: '<blockquote>نقل قول در اینجا...</blockquote>',
+                    ul: '<ul>\n    <li>آیتم اول</li>\n    <li>آیتم دوم</li>\n</ul>',
+                    code: '<pre><code>\n// کد شما در اینجا\n</code></pre>'
+                };
+
                 let replacement = '';
+                const selection = codeEditor.getSelection();
+
                 if (action === 'wrap') {
-                    const start = contentArea.selectionStart, end = contentArea.selectionEnd;
-                    replacement = `<${tag}>${contentArea.value.substring(start, end) || 'متن'}</${tag}>`;
-                    contentArea.setRangeText(replacement, start, end, 'select');
-                } else if (action === 'insert' && tag === 'figure') {
-                    const figureId = `fig-${Date.now()}`;
-                    const imgNumber = (contentArea.value.match(/<figure/g) || []).length + 1;
-                    const placeholder = `/src/assets/img/${nextIdInput.value}-${slugInput.value || 'slug'}-${imgNumber}.webp`;
-                    replacement = `<figure id="${figureId}">\n    <img src="${placeholder}" alt="توضیح تصویر">\n    <figcaption>کپشن تصویر</figcaption>\n</figure>\n`;
-                    contentArea.setRangeText(replacement, contentArea.selectionStart, contentArea.selectionEnd, 'end');
-                    createContentImageUploader(figureId);
+                    replacement = `<${tag}>${selection || 'متن'}</${tag}>`;
+                    codeEditor.replaceSelection(replacement);
+                } else if (action === 'insert') {
+                    if (tag === 'figure') {
+                        const figureId = `fig-${Date.now()}`;
+                        const imgNumber = (codeEditor.getValue().match(/<figure/g) || []).length + 1;
+                        const placeholder = `/src/assets/img/${nextIdInput.value}-${slugInput.value || 'slug'}-${imgNumber}.webp`;
+                        replacement = `<figure id="${figureId}">\n    <img src="${placeholder}" alt="توضیح تصویر" data-placeholder="true">\n    <figcaption>کپشن تصویر</figcaption>\n</figure>`;
+                    } else if (snippets[tag]) {
+                        replacement = snippets[tag];
+                    }
+                    
+                    // **راه‌حل کلیدی:** افزودن دو خط جدید بعد از درج محتوا
+                    const currentCursor = codeEditor.getCursor();
+                    codeEditor.replaceSelection(replacement + '\n\n');
+                    codeEditor.setCursor(currentCursor.line + (replacement.split('\n').length + 1));
                 }
-                debouncedLiveUpdate();
+                
+                codeEditor.focus();
+                syncUploadersWithContent();
             }
 
             toolbar.addEventListener('click', function(e) {
@@ -191,12 +249,11 @@
 
             if (syncSuccess) {
                 form.querySelectorAll('.live-update-input').forEach(input => input.addEventListener('input', debouncedLiveUpdate));
+                codeEditor.on('change', debouncedLiveUpdate);
                 previewFrame.src = '/site-preview/index.html';
             }
 
-            // --- منطق جدید آپلود تصویر ---
             const coverImageInput = document.getElementById('cover-image-input');
-            const coverImagePreview = document.getElementById('cover-image-preview');
             const coverImagePathInput = document.getElementById('cover_image_path');
             const contentImageUploadersContainer = document.getElementById('content-image-uploaders');
 
@@ -225,8 +282,6 @@
             coverImageInput.addEventListener('change', async function() {
                 const path = await uploadFile(this.files[0], 'cover');
                 if (path) {
-                    coverImagePreview.src = `/site-preview/${path}`;
-                    coverImagePreview.style.display = 'block';
                     coverImagePathInput.value = path;
                     debouncedLiveUpdate();
                 }
@@ -236,7 +291,7 @@
                 const uploaderDiv = document.createElement('div');
                 uploaderDiv.className = 'content-uploader';
                 uploaderDiv.dataset.figureId = figureId;
-                uploaderDiv.innerHTML = `<label>تصویر برای بلاک جدید (ID: ${figureId})</label><input type="file" accept="image/*">`;
+                uploaderDiv.innerHTML = `<label>تصویر برای بلاک (ID: ${figureId})</label><input type="file" accept="image/*">`;
                 contentImageUploadersContainer.appendChild(uploaderDiv);
 
                 uploaderDiv.querySelector('input[type="file"]').addEventListener('change', async function() {
@@ -244,11 +299,9 @@
                     label.textContent = 'در حال آپلود...';
                     const path = await uploadFile(this.files[0], 'content');
                     if (path) {
-                        const currentContent = contentArea.value;
-                        const finalSrc = `/site-preview/${path}`;
+                        const currentContent = codeEditor.getValue();
                         const figureRegex = new RegExp(`(<figure id="${figureId}"[^>]*>[\\s\\S]*?<img src=")[^"]*(".*</figure>)`);
-                        contentArea.value = currentContent.replace(figureRegex, `$1${finalSrc}$2`);
-                        debouncedLiveUpdate();
+                        codeEditor.setValue(currentContent.replace(figureRegex, `$1/site-preview/${path}$2`));
                         uploaderDiv.innerHTML = `<p>✅ تصویر <code>${path}</code> آپلود شد.</p>`;
                     } else {
                         label.textContent = 'خطا! دوباره تلاش کنید.';
@@ -256,11 +309,16 @@
                 });
             }
 
-            contentArea.addEventListener('input', function() {
-                const currentContent = contentArea.value;
+            function syncUploadersWithContent() {
+                const currentContent = codeEditor.getValue();
+                const tempDoc = new DOMParser().parseFromString(currentContent, 'text/html');
+                const figuresInContent = tempDoc.querySelectorAll('figure');
+                const contentFigureIds = new Set();
+                figuresInContent.forEach(fig => { if (fig.id) contentFigureIds.add(fig.id); });
+
                 document.querySelectorAll('.content-uploader').forEach(async uploader => {
                     const figureId = uploader.dataset.figureId;
-                    if (!currentContent.includes(`id="${figureId}"`)) {
+                    if (!contentFigureIds.has(figureId)) {
                         const imgTag = uploader.querySelector('p > code');
                         if(imgTag) {
                             await fetch('/delete-image', {
@@ -271,10 +329,21 @@
                         uploader.remove();
                     }
                 });
-            });
+
+                figuresInContent.forEach(figure => {
+                    const figureId = figure.id;
+                    const img = figure.querySelector('img');
+                    const uploaderExists = document.querySelector(`.content-uploader[data-figure-id="${figureId}"]`);
+                    if (img && img.dataset.placeholder === "true" && !uploaderExists) {
+                        createContentImageUploader(figureId);
+                    }
+                });
+            }
+
+            codeEditor.on('change', syncUploadersWithContent);
             
             form.addEventListener('submit', function(e) {
-                contentArea.value = contentArea.value.replace(/\/site-preview\//g, '/');
+                document.getElementById('content').value = codeEditor.getValue().replace(/\/site-preview\//g, '/');
             });
         });
     </script>
