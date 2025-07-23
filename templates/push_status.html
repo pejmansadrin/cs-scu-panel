@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>وضعیت Push</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        .container { text-align: center; background: white; padding: 2em 4em; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #28a745; }
+        h1.warning { color: #ffc107; }
+        p { color: #6c757d; max-width: 450px; }
+        .button-group { margin-top: 2em; display: flex; flex-direction: column; gap: 1em; }
+        button { font-size: 1.1em; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; transition: all 0.2s ease; }
+        #push-btn { background-color: #28a745; color: white; }
+        #push-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+        #status-area { margin-top: 2em; padding: 1em; background-color: #e9ecef; border-radius: 5px; white-space: pre-wrap; font-family: monospace; text-align: left; direction: ltr; min-height: 50px; border-left: 5px solid transparent; }
+        /* کلاس‌های جدید برای نمایش وضعیت */
+        #status-area.success { border-left-color: #28a745; color: #155724; background-color: #d4edda; }
+        #status-area.error { border-left-color: #dc3545; color: #721c24; background-color: #f8d7da; }
+        a { margin-top: 2em; display: inline-block; color: #007bff; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- این بخش به صورت داینامیک توسط پایتون پر می‌شود -->
+        {% if title %}
+            <!-- این حالت فقط زمانی نمایش داده می‌شود که کاربر بلافاصله بعد از کامیت به این صفحه آمده باشد -->
+            <h1>✅ کامیت موفق!</h1>
+            <p>خبر «{{ title }}» با موفقیت در ریپازیتوری محلی ثبت شد و آماده Push است.</p>
+            <div class="button-group">
+                <button id="push-btn">Push نهایی به GitHub</button>
+            </div>
+            <div id="status-area">برای انتشار، روی دکمه بالا کلیک کنید.</div>
+
+        {% else %}
+            <!-- این حالت زمانی نمایش داده می‌شود که صفحه رفرش شده یا مستقیماً باز شده باشد -->
+            <h1 class="warning">⚠️ کامیت قبلی پاک شد!</h1>
+            <p>به دلیل رفرش کردن صفحه یا باز کردن مستقیم، برای جلوگیری از ارسال داده‌های قدیمی، کامیت قبلی شما پاک شد.</p>
+            <p>این یک اقدام امنیتی است. لطفاً برای ثبت خبر جدید به صفحه اصلی بازگردید.</p>
+            
+            <!-- نمایش پیام همگام‌سازی با استفاده از کلاس CSS -->
+            {% if sync_message %}
+                <div id="status-area" class="{% if sync_success %}success{% else %}error{% endif %}">
+                    {{ sync_message }}
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <a href="/">بازگشت به صفحه اصلی</a>
+    </div>
+
+    <script>
+        // این اسکریپت فقط برای حالتی است که کاربر بلافاصله بعد از کامیت به این صفحه آمده
+        const pushBtn = document.getElementById('push-btn');
+        if (pushBtn) {
+            pushBtn.addEventListener('click', async function() {
+                const statusArea = document.getElementById('status-area');
+                pushBtn.disabled = true;
+                pushBtn.textContent = 'در حال Push...';
+                statusArea.textContent = 'در حال ارسال تغییرات به GitHub...';
+                statusArea.className = ''; // حذف کلاس‌های قبلی
+
+                try {
+                    const response = await fetch('/push-to-github', { method: 'POST' });
+                    const data = await response.json();
+
+                    statusArea.textContent = data.message;
+                    if (data.success) {
+                        statusArea.classList.add('success');
+                        pushBtn.textContent = '✅ با موفقیت انجام شد';
+                    } else {
+                        statusArea.classList.add('error');
+                        // در صورت خطا، دکمه را برای تلاش مجدد فعال نمی‌کنیم
+                        // چون کاربر باید به صفحه اصلی برگردد تا همه چیز پاک شود
+                    }
+                } catch (error) {
+                    statusArea.textContent = 'خطای شبکه در ارتباط با سرور.';
+                    statusArea.classList.add('error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
