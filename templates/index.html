@@ -6,7 +6,7 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 2em; background-color: #f4f4f9; color: #333; }
         .container { max-width: 800px; margin: auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #0056b3; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; margin-top: 0;}
+        h1, h2, h3 { color: #0056b3; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; margin-top: 0;}
         label { display: block; margin-top: 1.5em; font-weight: bold; }
         input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
         input[type="color"] { padding: 5px; height: 45px; }
@@ -19,81 +19,74 @@
         .tag-row button { background-color: #dc3545; }
         #add-tag-btn { background-color: #28a745; margin-top: 10px; }
         small { color: #6c757d; font-weight: normal; }
-
-        /* Styles for Sync Status */
         .status-section { margin-bottom: 2em; }
-        .sync-message {
-            text-align: center;
-            padding: 12px;
-            border-radius: 5px;
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            font-weight: bold;
-        }
-        .sync-message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
-        }
+        .sync-message { text-align: center; padding: 12px; border-radius: 5px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; font-weight: bold; }
+        .sync-message.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .editor-toolbar { background-color: #f8f9fa; padding: 8px; border: 1px solid #ccc; border-bottom: none; border-radius: 4px 4px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
+        .toolbar-group { display: flex; gap: 5px; border-left: 1px solid #ddd; padding-left: 5px; }
+        #content { border-radius: 0 0 4px 4px; margin-top: 0; height: 300px; font-family: 'Vazirmatn', monospace; }
+        #preview-frame { width: 100%; height: 500px; border: 1px solid #ccc; border-radius: 4px; background-color: #fff; margin-top: 5px; }
+        
+        /* --- Styles for Image Uploader --- */
+        .uploader-section { margin-top: 2em; padding: 1.5em; border: 1px dashed #ccc; border-radius: 8px; }
+        .cover-image-preview { max-width: 200px; margin-top: 10px; border-radius: 4px; border: 1px solid #ddd; }
+        .content-uploader { background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 1em; }
     </style>
 </head>
-<!-- مقدار موفقیت همگام‌سازی را در اینجا به عنوان یک data attribute قرار می‌دهیم -->
 <body data-sync-success="{{ sync_success }}">
     <div class="container">
-        <!-- Section to display sync status on page load -->
         {% if sync_message %}
         <div class="status-section">
             <h2>وضعیت اولیه سیستم</h2>
-            <div class="sync-message {% if not sync_success %}error{% endif %}">
-                {{ sync_message }}
-            </div>
+            <div class="sync-message {% if not sync_success %}error{% endif %}">{{ sync_message }}</div>
         </div>
         {% endif %}
 
         <h1>افزودن خبر جدید</h1>
         <form action="/add-news" method="post" id="news-form">
+            <input type="hidden" name="next_id" id="next_id" value="{{ next_id }}">
             
             <div class="form-grid">
-                <div class="full-width">
-                    <label for="title">📰 عنوان خبر (فارسی)</label>
-                    <input type="text" id="title" name="title" required>
-                </div>
-                <div>
-                    <label for="english_slug">🔗 نامک انگلیسی (Slug)</label>
-                    <input type="text" id="english_slug" name="english_slug" placeholder="website-launch" required>
-                </div>
-                <div>
-                    <label for="author_id">✍️ نویسنده</label>
-                    <select id="author_id" name="author_id" required>
-                        {% for author in authors %}
-                            <option value="{{ author.id }}">{{ author.name }}</option>
-                        {% else %}
-                            <option value="" disabled>نویسنده‌ای یافت نشد!</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <div class="full-width"><label for="title">📰 عنوان خبر (فارسی)</label><input type="text" id="title" class="live-update-input" name="title" required></div>
+                <div><label for="english_slug">🔗 نامک انگلیسی (Slug)</label><input type="text" id="english_slug" class="live-update-input" name="english_slug" placeholder="website-launch" required></div>
+                <div><label for="author_id">✍️ نویسنده</label><select id="author_id" name="author_id" class="live-update-input" required>{% for author in authors %}<option value="{{ author.id }}">{{ author.name }}</option>{% else %}<option value="" disabled>نویسنده‌ای یافت نشد!</option>{% endfor %}</select></div>
             </div>
+            <div class="full-width"><label for="readingTime">⏱️ زمان مطالعه (فقط عدد)</label><input type="number" id="readingTime" class="live-update-input" name="readingTime" value="1" min="1" required></div>
+            <div class="full-width"><label for="summary">📝 خلاصه خبر</label><textarea id="summary" name="summary" class="live-update-input" rows="3" required></textarea></div>
+            <div class="full-width"><label>🏷️ تگ‌ها (حداکثر ۵ مورد)</label><div id="tags-container" class="live-update-input"></div><button type="button" id="add-tag-btn">افزودن تگ</button></div>
 
-            <div class="full-width">
-                <label for="readingTime">⏱️ زمان مطالعه (فقط عدد)</label>
-                <input type="number" id="readingTime" name="readingTime" value="1" min="1" required>
-            </div>
-
-            <div class="full-width">
-                <label for="summary">📝 خلاصه خبر</label>
-                <textarea id="summary" name="summary" rows="3" required></textarea>
-            </div>
-
-            <div class="full-width">
-                <label>🏷️ تگ‌ها (حداکثر ۵ مورد)</label>
-                <div id="tags-container"></div>
-                <button type="button" id="add-tag-btn">افزودن تگ</button>
+            <div class="full-width uploader-section">
+                <h3>🖼️ تصویر اصلی خبر</h3>
+                <input type="file" id="cover-image-input" accept="image/*">
+                <img id="cover-image-preview" src="" alt="پیش‌نمایش تصویر اصلی" style="display: none;">
+                <input type="hidden" id="cover_image_path" name="cover_image_path" class="live-update-input">
             </div>
 
             <div class="full-width">
                 <label for="content">📄 متن کامل خبر (HTML)</label>
-                <textarea id="content" name="content" rows="12"></textarea>
+                <div class="editor-toolbar">
+                    <div class="toolbar-group">
+                        <button type="button" data-action="wrap" data-tag="b"><b>بولد</b></button>
+                        <button type="button" data-action="wrap" data-tag="i"><i>ایتالیک</i></button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button type="button" data-action="insert" data-tag="h2">زیرتیتر (H2)</button>
+                        <button type="button" data-action="insert" data-tag="p">پاراگراف</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button type="button" data-action="insert" data-tag="figure">تصویر با کپشن</button>
+                        <button type="button" data-action="insert" data-tag="blockquote">نقل قول</button>
+                        <button type="button" data-action="insert" data-tag="ul">لیست</button>
+                        <button type="button" data-action="insert" data-tag="code">بلاک کد</button>
+                    </div>
+                </div>
+                <textarea id="content" name="content" class="live-update-input"></textarea>
+                <div id="content-image-uploaders"></div>
+            </div>
+
+            <div class="full-width">
+                <label for="preview-frame">👁️ پیش‌نمایش زنده در سایت اصلی</label>
+                <iframe id="preview-frame" title="Live Preview"></iframe>
             </div>
 
             <button type="submit" class="full-width">ثبت خبر و رفتن به مرحله Push</button>
@@ -102,43 +95,186 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // مقدار را از data attribute تگ body می‌خوانیم
-            // چون خروجی "True" یا "False" (به صورت رشته) است، آن را با "True" مقایسه می‌کنیم
             const syncSuccess = document.body.getAttribute('data-sync-success') === 'True';
-
-            // اگر همگام‌سازی اولیه موفق نبود، کل فرم را غیرفعال می‌کنیم
             if (!syncSuccess) {
                 const form = document.getElementById('news-form');
-                if (form) {
-                    Array.from(form.elements).forEach(el => el.disabled = true);
-                }
+                if (form) Array.from(form.elements).forEach(el => el.disabled = true);
             }
 
-            // منطق مربوط به تگ‌های داینامیک
+            const form = document.getElementById('news-form');
+            const toolbar = document.querySelector('.editor-toolbar');
+            const previewFrame = document.getElementById('preview-frame');
+            const contentArea = document.getElementById('content');
+            const nextIdInput = document.getElementById('next_id');
+            const slugInput = document.getElementById('english_slug');
+            
             const addTagBtn = document.getElementById('add-tag-btn');
             const tagsContainer = document.getElementById('tags-container');
             let tagCounter = 0;
-
             addTagBtn.addEventListener('click', function () {
-                if (tagCounter >= 5) { return; }
+                if (tagCounter >= 5) return;
                 tagCounter++;
                 const tagRow = document.createElement('div');
                 tagRow.className = 'tag-row';
-                tagRow.innerHTML = `
-                    <input type="text" name="tag_name_${tagCounter}" placeholder="نام تگ ${tagCounter}" required>
-                    <input type="color" name="tag_color_${tagCounter}" value="#3b82f6">
-                    <button type="button" class="remove-tag-btn">حذف</button>
-                `;
+                tagRow.innerHTML = `<input type="text" name="tag_name_${tagCounter}" placeholder="نام تگ ${tagCounter}" required><input type="color" name="tag_color_${tagCounter}" value="#3b82f6"><button type="button" class="remove-tag-btn">حذف</button>`;
                 tagsContainer.appendChild(tagRow);
                 if (tagCounter >= 5) addTagBtn.disabled = true;
+                debouncedLiveUpdate();
             });
-
+            tagsContainer.addEventListener('input', debouncedLiveUpdate);
             tagsContainer.addEventListener('click', function (e) {
                 if (e.target.classList.contains('remove-tag-btn')) {
                     e.target.parentElement.remove();
                     tagCounter--;
                     addTagBtn.disabled = false;
+                    debouncedLiveUpdate();
                 }
+            });
+
+            function getFormDataAsObject() {
+                const data = {};
+                const formData = new FormData(form);
+                for (const [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                data.tags = [];
+                for (let i = 1; i <= 5; i++) {
+                    const name = formData.get(`tag_name_${i}`);
+                    const color = formData.get(`tag_color_${i}`);
+                    if (name && color) data.tags.push([name, color]);
+                }
+                return data;
+            }
+
+            async function triggerLiveUpdate() {
+                const data = getFormDataAsObject();
+                try {
+                    const response = await fetch('/live-update', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        previewFrame.contentWindow.location.reload();
+                    } else { console.error('Live update failed:', result.error); }
+                } catch (error) { console.error('Network error during live update:', error); }
+            }
+
+            let debounceTimer;
+            function debouncedLiveUpdate() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(triggerLiveUpdate, 500);
+            }
+
+            function modifyText(action, tag) {
+                let replacement = '';
+                if (action === 'wrap') {
+                    const start = contentArea.selectionStart, end = contentArea.selectionEnd;
+                    replacement = `<${tag}>${contentArea.value.substring(start, end) || 'متن'}</${tag}>`;
+                    contentArea.setRangeText(replacement, start, end, 'select');
+                } else if (action === 'insert' && tag === 'figure') {
+                    const figureId = `fig-${Date.now()}`;
+                    const imgNumber = (contentArea.value.match(/<figure/g) || []).length + 1;
+                    const placeholder = `/src/assets/img/${nextIdInput.value}-${slugInput.value || 'slug'}-${imgNumber}.webp`;
+                    replacement = `<figure id="${figureId}">\n    <img src="${placeholder}" alt="توضیح تصویر">\n    <figcaption>کپشن تصویر</figcaption>\n</figure>\n`;
+                    contentArea.setRangeText(replacement, contentArea.selectionStart, contentArea.selectionEnd, 'end');
+                    createContentImageUploader(figureId);
+                }
+                debouncedLiveUpdate();
+            }
+
+            toolbar.addEventListener('click', function(e) {
+                const button = e.target.closest('button');
+                if (button && button.dataset.action) {
+                    modifyText(button.dataset.action, button.dataset.tag);
+                }
+            });
+
+            if (syncSuccess) {
+                form.querySelectorAll('.live-update-input').forEach(input => input.addEventListener('input', debouncedLiveUpdate));
+                previewFrame.src = '/site-preview/index.html';
+            }
+
+            // --- منطق جدید آپلود تصویر ---
+            const coverImageInput = document.getElementById('cover-image-input');
+            const coverImagePreview = document.getElementById('cover-image-preview');
+            const coverImagePathInput = document.getElementById('cover_image_path');
+            const contentImageUploadersContainer = document.getElementById('content-image-uploaders');
+
+            async function uploadFile(file, uploadType) {
+                if (!file || !slugInput.value) {
+                    alert('لطفا ابتدا نامک انگلیسی را پر کنید.');
+                    return null;
+                }
+                const formData = new FormData();
+                formData.append('image_file', file);
+                formData.append('english_slug', slugInput.value);
+                formData.append('next_id', nextIdInput.value);
+                formData.append('upload_type', uploadType);
+                
+                try {
+                    const response = await fetch('/upload-image', { method: 'POST', body: formData });
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.error);
+                    return result.path;
+                } catch (error) {
+                    alert(`خطا در آپلود: ${error.message}`);
+                    return null;
+                }
+            }
+
+            coverImageInput.addEventListener('change', async function() {
+                const path = await uploadFile(this.files[0], 'cover');
+                if (path) {
+                    coverImagePreview.src = `/site-preview/${path}`;
+                    coverImagePreview.style.display = 'block';
+                    coverImagePathInput.value = path;
+                    debouncedLiveUpdate();
+                }
+            });
+
+            function createContentImageUploader(figureId) {
+                const uploaderDiv = document.createElement('div');
+                uploaderDiv.className = 'content-uploader';
+                uploaderDiv.dataset.figureId = figureId;
+                uploaderDiv.innerHTML = `<label>تصویر برای بلاک جدید (ID: ${figureId})</label><input type="file" accept="image/*">`;
+                contentImageUploadersContainer.appendChild(uploaderDiv);
+
+                uploaderDiv.querySelector('input[type="file"]').addEventListener('change', async function() {
+                    const label = uploaderDiv.querySelector('label');
+                    label.textContent = 'در حال آپلود...';
+                    const path = await uploadFile(this.files[0], 'content');
+                    if (path) {
+                        const currentContent = contentArea.value;
+                        const finalSrc = `/site-preview/${path}`;
+                        const figureRegex = new RegExp(`(<figure id="${figureId}"[^>]*>[\\s\\S]*?<img src=")[^"]*(".*</figure>)`);
+                        contentArea.value = currentContent.replace(figureRegex, `$1${finalSrc}$2`);
+                        debouncedLiveUpdate();
+                        uploaderDiv.innerHTML = `<p>✅ تصویر <code>${path}</code> آپلود شد.</p>`;
+                    } else {
+                        label.textContent = 'خطا! دوباره تلاش کنید.';
+                    }
+                });
+            }
+
+            contentArea.addEventListener('input', function() {
+                const currentContent = contentArea.value;
+                document.querySelectorAll('.content-uploader').forEach(async uploader => {
+                    const figureId = uploader.dataset.figureId;
+                    if (!currentContent.includes(`id="${figureId}"`)) {
+                        const imgTag = uploader.querySelector('p > code');
+                        if(imgTag) {
+                            await fetch('/delete-image', {
+                                method: 'POST', headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ path: imgTag.textContent })
+                            });
+                        }
+                        uploader.remove();
+                    }
+                });
+            });
+            
+            form.addEventListener('submit', function(e) {
+                contentArea.value = contentArea.value.replace(/\/site-preview\//g, '/');
             });
         });
     </script>
