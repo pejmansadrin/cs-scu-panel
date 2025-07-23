@@ -1,78 +1,101 @@
-import subprocess
 import os
-import logging
+import shutil
+import subprocess
 import sys
 
-# --- تنظیمات لاگ‌برداری ---
-# تنظیم می‌کنیم که لاگ‌ها در کنسول نمایش داده شوند
-# فرمت لاگ شامل زمان، سطح لاگ (INFO, ERROR) و پیام خواهد بود
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s',
-    stream=sys.stdout,  # ارسال خروجی لاگ به کنسول
-)
+# --- Configuration ---
+REPO_URL = "https://github.com/cs-scu/cs-scu.github.io.git"
+REPO_NAME = "cs-scu.github.io"
 
-# آدرس ریپازیتوری گیت
-repo_url = "https://github.com/cs-scu/cs-scu.github.io.git"
-
-# نام پوشه‌ای که پس از کلون شدن ایجاد می‌شود
-repo_name = repo_url.split('/')[-1].replace('.git', '')
-
-def clone_repository_verbose():
+def sync_repository(repo_url, repo_path):
     """
-    ریپازیتوری مشخص شده را با لاگ‌برداری کامل در تمام مراحل کلون می‌کند.
+    ریپازیتوری محلی را با ریموت همگام‌سازی می‌کند.
+    اگر پوشه وجود نداشته باشد آن را کلون می‌کند، در غیر این صورت آن را pull می‌کند.
     """
-    logging.info("اسکریپت کلون کردن ریپازیتوری شروع به کار کرد.")
-    
-    # بررسی اینکه آیا پوشه ریپازیتوری از قبل وجود دارد یا خیر
-    logging.info(f"بررسی وجود پوشه '{repo_name}' در مسیر فعلی...")
-    if os.path.isdir(repo_name):
-        logging.warning(f"پوشه '{repo_name}' از قبل وجود دارد. عملیات کلون کردن لغو شد.")
-        return
-
-    logging.info(f"پوشه '{repo_name}' یافت نشد. آماده‌سازی برای کلون کردن...")
-    
-    # دستور git clone با گزینه‌های verbose و progress برای نمایش جزئیات
-    git_command = ["git", "clone", "--verbose", "--progress", repo_url]
-    
-    logging.info(f"اجرای دستور: {' '.join(git_command)}")
-    
+    print(f"--- Starting Smart Sync for '{repo_path}' ---")
     try:
-        # اجرای دستور و دریافت خروجی و خطاها
-        # check=True باعث می‌شود در صورت بروز خطا، یک استثنا (exception) پرتاب شود
-        result = subprocess.run(
-            git_command,
-            check=True,
-            capture_output=True, # خروجی استاندارد و خطای استاندارد را ذخیره می‌کند
-            text=True            # خروجی‌ها را به صورت متن (string) برمی‌گرداند
-        )
+        # ۱. بررسی وجود پوشه ریپازیتوری
+        if os.path.exists(repo_path) and os.path.isdir(os.path.join(repo_path, '.git')):
+            print(f"-> Directory '{repo_path}' exists. Attempting to update...")
+            
+            # به مسیر ریپازیتوری می‌رویم تا دستورات گیت را اجرا کنیم
+            original_path = os.getcwd()
+            os.chdir(repo_path)
+            
+            try:
+                # برای جلوگیری از هرگونه تداخل، تغییرات محلی را پاک می‌کنیم
+                print("-> Cleaning local changes (git reset --hard HEAD)...")
+                subprocess.run(
+                    ["git", "reset", "--hard", "HEAD"],
+                    check=True, capture_output=True, text=True
+                )
+                
+                # فقط تغییرات جدید را از شاخه اصلی دریافت می‌کنیم
+                print("-> Pulling latest changes from origin...")
+                result = subprocess.run(
+                    ["git", "pull"],
+                    check=True, capture_output=True, text=True
+                )
+                
+                # بررسی می‌کنیم آیا آپدیتی انجام شده است یا خیر
+                if "Already up to date." in result.stdout:
+                    print("✅ Repository is already up to date.")
+                else:
+                    print("✅ Success: Repository has been updated.")
+                    # print("   Changes:\n", result.stdout) # برای نمایش جزئیات تغییرات می‌توانید این خط را از کامنت خارج کنید
+                    
+            finally:
+                # به مسیر اصلی برمی‌گردیم
+                os.chdir(original_path)
 
-        # لاگ کردن خروجی استاندارد (stdout) و خطای استاندارد (stderr) از Git
-        # Git معمولا پیام‌های پیشرفت را در stderr می‌نویسد
-        if result.stdout:
-            logging.info("--- خروجی استاندارد از Git ---")
-            logging.info(result.stdout)
-        if result.stderr:
-            logging.info("--- خروجی پیشرفت و وضعیت از Git (stderr) ---")
-            logging.info(result.stderr)
+        else:
+            # ۲. اگر پوشه وجود نداشت، آن را از نو کلون می‌کنیم
+            print(f"-> Directory '{repo_path}' not found or is not a git repository. Cloning fresh...")
+            if os.path.exists(repo_path):
+                shutil.rmtree(repo_path) # اگر پوشه‌ای با این نام هست ولی ریپازیتوری نیست، حذفش می‌کنیم
+                
+            subprocess.run(
+                ["git", "clone", repo_url, repo_path],
+                check=True, capture_output=True
+            )
+            print(f"✅ Success: Repository has been freshly cloned into '{repo_path}'.")
 
-        logging.info(f"✅ عملیات با موفقیت به پایان رسید. پوشه '{repo_name}' ایجاد شد.")
-
-    except FileNotFoundError:
-        logging.error("❌ خطا: دستور 'git' یافت نشد.")
-        logging.error("لطفاً از نصب بودن Git روی سیستم خود و قرار داشتن آن در PATH سیستم مطمئن شوید.")
-        
     except subprocess.CalledProcessError as e:
-        # این خطا زمانی رخ می‌دهد که دستور git با کد غیر صفر خاتمه یابد (یعنی ناموفق باشد)
-        logging.error("❌ خطایی در حین اجرای دستور Git رخ داد:")
-        
-        # لاگ کردن خروجی‌هایی که منجر به خطا شده‌اند
-        if e.stdout:
-            logging.error("--- خروجی استاندارد (stdout) ---")
-            logging.error(e.stdout)
-        if e.stderr:
-            logging.error("--- خروجی خطا (stderr) ---")
-            logging.error(e.stderr)
+        print(f"❌ An error occurred during a git command:", file=sys.stderr)
+        print(f"   Error: {e.stderr}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ An unexpected error occurred: {e}", file=sys.stderr)
+        sys.exit(1)
+
+def force_fresh_clone(repo_url, repo_path):
+    """
+    (تابع قدیمی)
+    همیشه ریپازیتوری را حذف و از نو کلون می‌کند.
+    """
+    print(f"--- Starting Force Fresh Clone for '{repo_path}' ---")
+    try:
+        if os.path.exists(repo_path):
+            print(f"-> Directory '{repo_path}' exists. Removing it...")
+            shutil.rmtree(repo_path)
+            print("-> Old directory removed.")
+
+        print(f"-> Cloning a fresh copy from {repo_url}...")
+        subprocess.run(
+            ["git", "clone", repo_url, repo_path],
+            check=True,
+            capture_output=True
+        )
+        print(f"\n✅ Success: Repository has been freshly cloned into '{repo_path}'.")
+
+    except Exception as e:
+        print(f"❌ An error occurred: {e}", file=sys.stderr)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    clone_repository_verbose()
+    # از این به بعد، تابع بهینه را فراخوانی می‌کنیم
+    sync_repository(REPO_URL, REPO_NAME)
+    
+    # در صورت نیاز می‌توانید تابع قدیمی را فراخوانی کنید
+    # force_fresh_clone(REPO_URL, REPO_NAME)
