@@ -19,17 +19,19 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 2em; background-color: #f4f4f9; color: #333; }
         .container { max-width: 800px; margin: auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1, h2, h3 { color: #0056b3; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; margin-top: 0;}
-        label { display: block; margin-top: 1.5em; font-weight: bold; }
-        input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
-        input[type="color"] { padding: 5px; height: 45px; }
+        /* --- Compact Layout --- */
+        label { display: block; margin-top: 1em; font-weight: bold; margin-bottom: 0.25em; }
+        input, textarea, select { width: 100%; padding: 8px; margin-top: 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
+        
+        input[type="color"] { padding: 2px; height: 38px; }
         button { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
         button.full-width { width: 100%; margin-top: 1.5em; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1em; }
         .full-width { grid-column: 1 / -1; }
         .tag-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
         .tag-row input[type="text"] { flex-grow: 1; }
-        .tag-row button { background-color: #dc3545; }
-        #add-tag-btn { background-color: #28a745; margin-top: 10px; }
+        .tag-row button { background-color: #dc3545; padding: 5px 10px; }
+        #add-tag-btn { background-color: #28a745; margin-top: 10px; padding: 8px 15px; }
         small { color: #6c757d; font-weight: normal; }
         .status-section { margin-bottom: 2em; }
         .sync-message { text-align: center; padding: 12px; border-radius: 5px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; font-weight: bold; }
@@ -42,34 +44,23 @@
             border-radius: 0 0 4px 4px;
             height: 350px;
             direction: ltr;
-            font-size: 16px; /* فونت بزرگ‌تر */
+            font-size: 16px;
         }
-        .CodeMirror-gutters {
-            background-color: #282c34 !important;
-        }
+        .CodeMirror-gutters { background-color: #282c34 !important; }
 
         /* --- Styles for Editor Toolbar --- */
         .editor-toolbar { background-color: #f8f9fa; padding: 8px; border: 1px solid #ccc; border-bottom: none; border-radius: 4px 4px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
         .toolbar-group { display: flex; gap: 5px; border-left: 1px solid #ddd; padding-left: 5px; }
         .editor-toolbar button {
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 8px;
-            font-size: 0.9em;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
+            background-color: #fff; color: #333; border: 1px solid #ccc; padding: 8px;
+            font-size: 0.9em; border-radius: 5px; display: flex; align-items: center;
+            justify-content: center; width: 40px; height: 40px;
         }
         .editor-toolbar button:hover { background-color: #e9ecef; }
         .editor-toolbar .feather { width: 18px; height: 18px; }
 
-
         /* --- Styles for Image Uploader --- */
-        .uploader-section { margin-top: 2em; padding: 1.5em; border: 1px dashed #ccc; border-radius: 8px; }
+        .uploader-section { margin-top: 1.5em; padding: 1.5em; border: 1px dashed #ccc; border-radius: 8px; }
         .content-uploader { background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 1em; }
         .content-uploader p { margin: 0; }
     </style>
@@ -88,29 +79,30 @@
             <input type="hidden" name="next_id" id="next_id" value="{{ next_id }}">
             
             <div class="form-grid">
-                <div class="full-width"><label for="title">📰 عنوان خبر (فارسی)</label><input type="text" id="title" class="live-update-input" name="title" required></div>
-                <div><label for="english_slug">🔗 نامک انگلیسی (Slug)</label><input type="text" id="english_slug" class="live-update-input" name="english_slug" placeholder="website-launch" required></div>
-                <div><label for="author_id">✍️ نویسنده</label><select id="author_id" name="author_id" class="live-update-input" required>{% for author in authors %}<option value="{{ author.id }}">{{ author.name }}</option>{% else %}<option value="" disabled>نویسنده‌ای یافت نشد!</option>{% endfor %}</select></div>
+                <div class="full-width"><label for="title">عنوان خبر (فارسی)</label><input type="text" id="title" class="live-update-input" name="title" required></div>
+                <div><label for="english_slug">نامک انگلیسی (Slug)</label><input type="text" id="english_slug" class="live-update-input" name="english_slug" placeholder="website-launch" required></div>
+                <div><label for="author_id">نویسنده</label><select id="author_id" name="author_id" class="live-update-input" required>{% for author in authors %}<option value="{{ author.id }}">{{ author.name }}</option>{% else %}<option value="" disabled>نویسنده‌ای یافت نشد!</option>{% endfor %}</select></div>
             </div>
-            <div class="full-width"><label for="readingTime">⏱️ زمان مطالعه (فقط عدد)</label><input type="number" id="readingTime" class="live-update-input" name="readingTime" value="1" min="1" required></div>
-            <div class="full-width"><label for="summary">📝 خلاصه خبر</label><textarea id="summary" name="summary" class="live-update-input" rows="3" required></textarea></div>
-            <div class="full-width"><label>🏷️ تگ‌ها (حداکثر ۵ مورد)</label><div id="tags-container" class="live-update-input"></div><button type="button" id="add-tag-btn">افزودن تگ</button></div>
+            <div class="full-width"><label for="readingTime">زمان مطالعه (فقط عدد)</label><input type="number" id="readingTime" class="live-update-input" name="readingTime" value="1" min="1" required></div>
+            <div class="full-width"><label for="summary">خلاصه خبر</label><textarea id="summary" name="summary" class="live-update-input" rows="3" required></textarea></div>
+            <div class="full-width"><label>تگ‌ها (حداکثر ۵ مورد)</label><div id="tags-container" class="live-update-input"></div><button type="button" id="add-tag-btn">افزودن تگ</button></div>
 
             <div class="full-width uploader-section">
-                <h3>🖼️ تصویر اصلی خبر</h3>
+                <h3>تصویر اصلی خبر</h3>
                 <input type="file" id="cover-image-input" accept="image/*">
                 <input type="hidden" id="cover_image_path" name="cover_image_path" class="live-update-input">
             </div>
 
             <div class="full-width">
-                <label for="content">📄 متن کامل خبر (HTML)</label>
+                <label for="content">متن کامل خبر (HTML)</label>
                 <div class="editor-toolbar">
                     <div class="toolbar-group">
                         <button type="button" data-action="wrap" data-tag="b" title="بولد"><i data-feather="bold"></i></button>
                         <button type="button" data-action="wrap" data-tag="i" title="ایتالیک"><i data-feather="italic"></i></button>
                     </div>
                     <div class="toolbar-group">
-                        <button type="button" data-action="insert" data-tag="h2" title="زیرتیتر">H2</button>
+                        <button type="button" data-action="insert" data-tag="h2" title="زیرتیتر H2"><b>H2</b></button>
+                        <button type="button" data-action="insert" data-tag="h3" title="زیرتیتر H3"><b>H3</b></button>
                         <button type="button" data-action="insert" data-tag="p" title="پاراگراف">P</button>
                     </div>
                     <div class="toolbar-group">
@@ -118,6 +110,7 @@
                         <button type="button" data-action="insert" data-tag="blockquote" title="نقل قول"><i data-feather="message-square"></i></button>
                         <button type="button" data-action="insert" data-tag="ul" title="لیست"><i data-feather="list"></i></button>
                         <button type="button" data-action="insert" data-tag="code" title="بلاک کد"><i data-feather="code"></i></button>
+                        <button type="button" data-action="insert" data-tag="table" title="درج جدول سفارشی"><i data-feather="layout"></i></button>
                     </div>
                 </div>
                 <textarea id="content" name="content"></textarea>
@@ -125,7 +118,7 @@
             </div>
 
             <div class="full-width">
-                <label for="preview-frame">👁️ پیش‌نمایش زنده در سایت اصلی</label>
+                <label for="preview-frame">پیش‌نمایش زنده در سایت اصلی</label>
                 <iframe id="preview-frame" title="Live Preview" class="preview-frame"></iframe>
             </div>
 
@@ -208,10 +201,35 @@
             function modifyText(action, tag) {
                 const snippets = {
                     h2: '<h2>عنوان زیرتیتر</h2>',
+                    h3: '<h3>عنوان زیرتیتر سطح ۳</h3>',
                     p: '<p>متن پاراگراف در اینجا...</p>',
                     blockquote: '<blockquote>نقل قول در اینجا...</blockquote>',
                     ul: '<ul>\n    <li>آیتم اول</li>\n    <li>آیتم دوم</li>\n</ul>',
-                    code: '<pre><code>\n// کد شما در اینجا\n</code></pre>'
+                    code: '<pre><code>\n// کد شما در اینجا\n</code></pre>',
+                    // الگوی جدید برای جدول سفارشی
+                    table: `<div class="custom-table-wrapper">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>سرتیتر ۱</th>
+                                <th>سرتیتر ۲</th>
+                                <th>سرتیتر ۳</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>داده ۱</td>
+                                <td>داده ۲</td>
+                <td>داده ۳</td>
+                            </tr>
+                            <tr>
+                                <td>داده ۴</td>
+                                <td>داده ۵</td>
+                                <td>داده ۶</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>`
                 };
 
                 let replacement = '';
@@ -224,13 +242,12 @@
                     if (tag === 'figure') {
                         const figureId = `fig-${Date.now()}`;
                         const imgNumber = (codeEditor.getValue().match(/<figure/g) || []).length + 1;
-                        const placeholder = `/src/assets/img/${nextIdInput.value}-${slugInput.value || 'slug'}-${imgNumber}.webp`;
+                        const placeholder = `/assets/img/${nextIdInput.value}-${slugInput.value || 'slug'}-${imgNumber}.webp`;
                         replacement = `<figure id="${figureId}">\n    <img src="${placeholder}" alt="توضیح تصویر" data-placeholder="true">\n    <figcaption>کپشن تصویر</figcaption>\n</figure>`;
                     } else if (snippets[tag]) {
                         replacement = snippets[tag];
                     }
                     
-                    // **راه‌حل کلیدی:** افزودن دو خط جدید بعد از درج محتوا
                     const currentCursor = codeEditor.getCursor();
                     codeEditor.replaceSelection(replacement + '\n\n');
                     codeEditor.setCursor(currentCursor.line + (replacement.split('\n').length + 1));

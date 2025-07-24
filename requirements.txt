@@ -1,0 +1,4 @@
+Flask
+jdatetime
+Pillow
+Werkzeug
